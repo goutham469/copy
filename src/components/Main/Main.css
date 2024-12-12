@@ -1,0 +1,25 @@
+.MainPage{
+    height: 100vh;
+    border: 1px solid black;
+    margin: 5px;
+}
+.chatdashboard{
+    border: 1px solid black;
+}
+.contacts{
+    border: 1px solid black;
+}
+.taskbar{
+    border: 1px solid black;
+}
+.statusbarIcon{
+    width: 100px;
+    display: block;
+    border-radius: 30px;
+    margin-bottom: 50px;
+}
+.statusbarIcon:hover{
+    border: 2px solid green;
+    height: fit-content;
+    
+}

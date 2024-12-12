@@ -1,23 +1,65 @@
-import logo from './logo.svg';
+import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
+import { createBrowserRouter,RouterProvider } from 'react-router-dom';
+import Home from './components/Home/Home';
+import ForgotPassword from './components/ForgotPassword/ForgotPassword';
+import SignIn from './components/Sign/SignIn';
+import Main from './components/Main/Main';
+import DiscoverPeople from './components/DiscoverPeople/DiscoverPeople';
+import Feed from './components/Feed/Feed';
+import MyFriends from './components/Feed/MyFriends/MyFriends';
+import FindFriends from './components/Feed/FindFriends/FindFriends';
+import RequestedFriends from './components/Feed/RequestedFriends.js/RequestedFriends';
 
 function App() {
+  let router=createBrowserRouter([
+    {
+      path:'',
+      element:<Home/>
+    },
+    {
+      path:'Home',
+      element:<Home/>
+    },
+    {
+      path:'ForgotPassword',
+      element:<ForgotPassword/>
+    },
+    {
+      path:'SignIn',
+      element:<SignIn/>
+    },
+    {
+      path:'Main',
+      element:<Main/>
+    },
+    {
+      path:'discoverPeople/:user',
+      element:<DiscoverPeople/>
+    },
+    {
+      path:"Feed/:user",
+      element:<Feed/>,
+      children:[
+        {
+          path:'MyFriends',
+          element:<MyFriends/>
+        },
+        {
+          path:'FindFriends',
+          element:<FindFriends/>
+        },
+        {
+          path:'RequestedFriends',
+          element:<RequestedFriends/>
+        }
+      ]
+    }
+  ]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <RouterProvider router={router}></RouterProvider>
     </div>
   );
 }
