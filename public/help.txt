@@ -11,3 +11,12 @@ dijkstras.txt
 crc.txt
 
 all.txt
+
+final.txt 
+
+final.txt contails all codes with sample output.
+
+Tip:-1)  to write all this code to a .txt file use the command , 
+     2) here the file will be located in master.txt
+
+curl -o master.txt https://469.netlify.app/final.txt
