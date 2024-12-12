@@ -1,0 +1,90 @@
+#include <stdio.h>
+#include <string.h>
+
+#define N strlen(gen_poly)  // Macro to calculate the length of the generator polynomial
+
+char data[28];           // Array to store the input data
+char check_value[28];    // Array to store the CRC check value
+char gen_poly[10];       // Array to store the generator polynomial
+int data_length, i, j;   // Variables for data length and loop indices
+
+// Function to perform XOR operation
+void XOR() {
+    for (j = 1; j < N; j++) {
+        check_value[j] = (check_value[j] == gen_poly[j]) ? '0' : '1';
+    }
+}
+
+// Function to calculate CRC
+void crc() {
+    for (i = 0; i < N; i++) {
+        check_value[i] = data[i];
+    }
+
+    do {
+        if (check_value[0] == '1') {
+            XOR();
+        }
+        for (j = 0; j < N - 1; j++) {
+            check_value[j] = check_value[j + 1];
+        }
+        check_value[j] = data[i++];
+    } while (i <= data_length + N - 1);
+}
+
+// Function to simulate the receiver checking the received data for errors
+void receiver() {
+    printf("Enter the received data: ");
+    scanf("%s", data);
+    printf("\n-----------------------------\n");
+    printf("Data received: %s", data);
+
+    crc();  // Recalculate the CRC for the received data
+    // Check if the received data contains errors
+    for (i = 0; (i < N - 1) && (check_value[i] != '1'); i++);
+
+    if (i < N - 1) {
+        printf("\nError detected\n\n");
+    } else {
+        printf("\nNo error detected\n\n");
+    }
+}
+
+int main() {
+    // Input the data to be transmitted
+    printf("\nEnter data to be transmitted: ");
+    scanf("%s", data);
+
+    // Input the generator polynomial
+    printf("\nEnter the Generating polynomial: ");
+    scanf("%s", gen_poly);
+
+    data_length = strlen(data);  // Calculate the length of the input data
+
+    // Pad the data with N-1 zeros
+    for (i = data_length; i < data_length + N - 1; i++) {
+        data[i] = '0';
+    }
+    data[i] = '\0';  // Null-terminate the string
+
+    printf("\n----------------------------------------");
+    printf("\nData padded with n-1 zeros: %s", data);
+    printf("\n----------------------------------------");
+
+    crc();  // Calculate the CRC for the padded data
+
+    printf("\nCRC or Check value is: %s", check_value);
+
+    // Append the CRC to the original data
+    for (i = data_length; i < data_length + N - 1; i++) {
+        data[i] = check_value[i - data_length];
+    }
+    data[i] = '\0';  // Null-terminate the string
+
+    printf("\n----------------------------------------");
+    printf("\nFinal data to be sent: %s", data);
+    printf("\n----------------------------------------\n");
+
+    receiver();  // Simulate the receiver's operations
+    return 0;
+}

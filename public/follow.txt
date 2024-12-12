@@ -1,0 +1,150 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void FIRST(char);
+void FOLLOW(char);
+int addToSet(char[], char);
+
+int count, n = 0, m = 0;
+char prodn[10][10], first[10], follow[10];
+char nonTerminals[10]; // Array to store unique non-terminals
+int nonTerminalCount = 0;
+
+int main() {
+    int i, j;
+    char ch;
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &count);
+    printf("Enter %d productions (use $ for epsilon):\n", count);
+    for(i = 0; i < count; i++) {
+        scanf("%s", prodn[i]);
+        char nonTerminal = prodn[i][0];
+
+        // Store unique non-terminals
+        int found = 0;
+        for (j = 0; j < nonTerminalCount; j++) {
+            if (nonTerminals[j] == nonTerminal) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            nonTerminals[nonTerminalCount++] = nonTerminal;
+        }
+    }
+
+    // Calculate and display FIRST and FOLLOW for each non-terminal
+    for (i = 0; i < nonTerminalCount; i++) {
+        char nonTerminal = nonTerminals[i];
+
+        // Calculate FIRST set
+        n = 0;  // Reset index for FIRST array
+        memset(first, 0, sizeof(first)); // Clear the FIRST set
+        FIRST(nonTerminal);
+        printf("FIRST(%c) = { ", nonTerminal);
+        for (j = 0; j < n; j++) {
+            printf("%c ", first[j]);
+        }
+        printf("}\n");
+
+        // Calculate FOLLOW set
+        m = 0;  // Reset index for FOLLOW array
+        memset(follow, 0, sizeof(follow)); // Clear the FOLLOW set
+        FOLLOW(nonTerminal);
+        printf("FOLLOW(%c) = { ", nonTerminal);
+        for (j = 0; j < m; j++) {
+            printf("%c ", follow[j]);
+        }
+        printf("}\n\n");
+    }
+
+    return 0;
+}
+
+// Function to add an element to a set if it's not already present
+int addToSet(char set[], char c) {
+    if (c == '\0') return 0; // Ignore null characters
+    int i;
+    for (i = 0; set[i] != '\0'; i++) {
+        if (set[i] == c)
+            return 0; // Element already in set
+    }
+    set[i] = c;
+    set[i + 1] = '\0';
+    return 1; // Successfully added
+}
+
+// Function to find FIRST set of a given symbol
+void FIRST(char c) {
+    int j;
+
+    if (!isupper(c)) { // If c is a terminal
+        addToSet(first, c);
+        n++;
+        return;
+    }
+
+    for (j = 0; j < count; j++) {
+        if (prodn[j][0] == c) { // If production starts with c
+            if (prodn[j][2] == '$') { // If epsilon production
+                addToSet(first, '$');
+                n++;
+            }
+            else if (islower(prodn[j][2])) { // If production has terminal
+                addToSet(first, prodn[j][2]);
+                n++;
+            }
+            else { // If production has non-terminal
+                FIRST(prodn[j][2]);
+            }
+        }
+    }
+}
+
+// Function to find FOLLOW set of a given symbol
+void FOLLOW(char c) {
+    int i, j;
+
+    // If c is the start symbol, add '$' to FOLLOW set
+    if (prodn[0][0] == c) {
+        addToSet(follow, '$');
+        m++;
+    }
+
+    // Iterate over all productions
+    for (i = 0; i < count; i++) {
+        for (j = 2; j < strlen(prodn[i]); j++) {
+            if (prodn[i][j] == c) { // If we find c in production
+                if (prodn[i][j + 1] != '\0') {
+                    // If there's a symbol after c, calculate FIRST of that symbol
+                    if (islower(prodn[i][j + 1])) { // If terminal
+                        addToSet(follow, prodn[i][j + 1]);
+                        m++;
+                    } else { // If non-terminal
+                        int k;
+                        n = 0; // Reset index for FIRST array
+                        memset(first, 0, sizeof(first)); // Clear the FIRST set for reuse
+                        FIRST(prodn[i][j + 1]);
+                        for (k = 0; k < n; k++) {
+                            if (first[k] != '$') {
+                                if (addToSet(follow, first[k]))
+                                    m++;
+                            }
+                        }
+
+                        // If FIRST contains epsilon, add FOLLOW of left-hand side
+                        if (strchr(first, '$') != NULL) {
+                            FOLLOW(prodn[i][0]);
+                        }
+                    }
+                }
+                // If at the end of production, add FOLLOW of left-hand side
+                else if (prodn[i][j + 1] == '\0' && c != prodn[i][0]) {
+                    FOLLOW(prodn[i][0]);
+                }
+            }
+        }
+    }
+}

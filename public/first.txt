@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void FIRST(char);
+int addToSet(char[], char);
+
+int count, n = 0;
+char prodn[10][10], first[10];
+
+int main() {
+    int i, j;
+    char ch;
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &count);
+    printf("Enter %d productions (use $ for epsilon):\n", count);
+    for (i = 0; i < count; i++) {
+        scanf("%s", prodn[i]);
+    }
+
+    for (i = 0; i < count; i++) {
+        char nonTerminal = prodn[i][0];
+        n = 0;
+        memset(first, 0, sizeof(first));
+        FIRST(nonTerminal);
+        printf("FIRST(%c) = { ", nonTerminal);
+        for (j = 0; j < n; j++) {
+            printf("%c ", first[j]);
+        }
+        printf("}\n");
+    }
+
+    return 0;
+}
+
+int addToSet(char set[], char c) {
+    if (c == '\0') return 0;
+    int i;
+    for (i = 0; set[i] != '\0'; i++) {
+        if (set[i] == c)
+            return 0;
+    }
+    set[i] = c;
+    set[i + 1] = '\0';
+    return 1;
+}
+
+void FIRST(char c) {
+    int j;
+
+    if (!isupper(c)) {
+        addToSet(first, c);
+        n++;
+        return;
+    }
+
+    for (j = 0; j < count; j++) {
+        if (prodn[j][0] == c) {
+            if (prodn[j][3] == '$') {
+                addToSet(first, '$');
+                n++;
+            }
+            else if (islower(prodn[j][3])) {
+                addToSet(first, prodn[j][3]);
+                n++;
+            }
+            else {
+                FIRST(prodn[j][3]);
+            }
+        }
+    }
+}

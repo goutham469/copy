@@ -1,2 +1,13 @@
 leftFactoring.txt
 
+shift reduce parser = srp.txt
+
+first.txt
+
+follow.txt
+
+dijkstras.txt
+
+crc.txt
+
+all.txt
