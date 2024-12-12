@@ -1,0 +1,161 @@
+#include <stdio.h>
+#include <string.h>
+void left_factor(char non_terminal, char gram[]) {
+   char parts[10][50], modified_Gram[50], new_Gram[50];
+   int i, j = 0, k = 0, n = 0, pos;
+   // Splitting the productions by '|'
+   for (i = 0; gram[i] != '\0'; i++) {
+       if (gram[i] == '|') {
+           parts[n][j] = '\0';
+           n++;
+           j = 0;
+       } else {
+           parts[n][j++] = gram[i];
+       }
+   }
+   parts[n][j] = '\0';  // Terminate the last production
+   n++;
+   // Find the longest common prefix among all productions
+   for (i = 0; i < strlen(parts[0]); i++) {
+       char ch = parts[0][i];
+       int is_common = 1;
+       for (j = 1; j < n; j++) {
+           if (parts[j][i] != ch) {
+               is_common = 0;
+               break;
+           }
+       }
+       if (is_common) {
+           modified_Gram[k++] = ch;
+           pos = i + 1;
+       } else {
+           break;
+       }
+   }
+   modified_Gram[k] = 'X';  // New non-terminal
+   modified_Gram[k + 1] = '\0';
+   // Create the new grammar for the non-terminal X
+   new_Gram[0] = '\0';
+   for (i = 0; i < n; i++) {
+       if (strlen(parts[i] + pos) == 0) {
+           strcat(new_Gram, "e");  // Use 'e' for empty production
+       } else {
+           strcat(new_Gram, parts[i] + pos);
+       }
+       if (i < n - 1)
+           strcat(new_Gram, "|");
+   }
+   // Print the left factored grammar for this non-terminal
+   printf("%c->%s\n", non_terminal, modified_Gram);
+   printf("X->%s\n", new_Gram);
+}
+int main() {
+   int num_productions;
+   char non_terminal[10], gram[10][100];
+
+   printf("Enter the number of production rules: ");
+   scanf("%d", &num_productions);
+   getchar();  // To consume newline after scanf
+
+   for (int i = 0; i < num_productions; i++) {
+       printf("Enter Production %d (e.g., A->abc|xyz): ", i + 1);
+       scanf("%c->%s", &non_terminal[i], gram[i]);
+       getchar();  // To consume newline
+   }
+   printf("\nGrammar Without Left Factoring:\n");
+   for (int i = 0; i < num_productions; i++) {
+       left_factor(non_terminal[i], gram[i]);
+   }
+   return 0;
+}
+
+
+#include <stdio.h>
+Function to remove left factoring
+void removeLeftFactoring(char *nonTerminal, char *productions) {
+    char commonPrefix[100], remaining[10][100], newNonTerminal[2];
+    int i = 0, j = 0, k = 0, l = 0, hasLeftFactoring = 0;
+    char alternates[10][100];
+    int altCount = 0;
+    Split productions into alternates
+    while (productions[i] != '\0') {
+        j = 0;
+        while (productions[i] != '|' && productions[i] != '\0')
+        {
+            alternates[altCount][j++] = productions[i++];
+        }
+        alternates[altCount][j] = '\0';
+        altCount++;
+        if (productions[i] == '|') {
+            i++;
+        }
+    }
+    Find the common prefix
+    for (i = 0; alternates[0][i] != '\0'; i++) {
+        char currentChar = alternates[0][i];
+        for (j = 1; j < altCount; j++) {
+            if (alternates[j][i] != currentChar) {
+                commonPrefix[i] = '\0';
+                hasLeftFactoring = (i > 0);
+                break;
+            }
+        }
+        if (!hasLeftFactoring) {
+            commonPrefix[i] = currentChar;
+        } else {
+            break;
+        }
+    }
+    commonPrefix[i] = '\0';
+    If no left factoring, print as is
+    if (!hasLeftFactoring) {
+        printf("No left factoring found.\n");
+        printf("%s -> ", nonTerminal);
+        for (i = 0; i < altCount; i++) {
+            printf("%s", alternates[i]);
+            if (i < altCount - 1) {
+                printf(" | ");
+            }
+        }
+        printf("\n");
+        return;
+    }
+    Separate remaining parts
+    for (j = 0; j < altCount; j++) {
+        i = 0;
+        while (alternates[j][i] == commonPrefix[i] && commonPrefix[i] != '\0') {
+            i++;
+        }
+        k = 0;
+        while (alternates[j][i] != '\0') {
+            remaining[j][k++] = alternates[j][i++];
+        }
+        remaining[j][k] = '\0';
+    }
+    Print the factored productions
+    printf("After removing left factoring:\n");
+    printf("%s -> %s%s'\n", nonTerminal, commonPrefix, nonTerminal);
+    printf("%s' -> ", nonTerminal);
+    for (i = 0; i < altCount; i++) {
+        if (remaining[i][0] == '\0') {
+            printf("ε");
+        } else {
+            printf("%s", remaining[i]);
+        }
+        if (i < altCount - 1) {
+            printf(" | ");
+        }
+    }
+    printf("\n");
+}
+int main() {
+    char nonTerminal[2], productions[100];
+    Input: Non-terminal and its productions
+    printf("Enter the non-terminal: ");
+    scanf("%s", nonTerminal);
+    printf("Enter the productions (use '|' for alternates): ");
+    scanf("%s", productions);
+    Remove left factoring
+    removeLeftFactoring(nonTerminal, productions);
+    return 0;
+}
