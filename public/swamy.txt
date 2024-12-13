@@ -1,0 +1,1089 @@
+Lexical
+
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_LENGTH 100
+
+// Check if the character is a delimiter
+bool isDelimiter(char chr) {
+    return (chr == ' ' || chr == '+' || chr == '-' || chr == '*' || chr == '/' ||
+            chr == ',' || chr == ';' || chr == '%' || chr == '>' || chr == '<' ||
+            chr == '=' || chr == '(' || chr == ')' || chr == '[' || chr == ']' ||
+            chr == '{' || chr == '}' || !isprint(chr));
+}
+
+// Check if the character is an operator
+bool isOperator(char chr) {
+    return (chr == '+' || chr == '-' || chr == '*' || chr == '/' || chr == '>' ||
+            chr == '<' || chr == '=');
+}
+
+// Check if the character is a punctuation
+bool isPunctuation(char chr) {
+    return (chr == ',' || chr == ';' || chr == '"');
+}
+
+// Check if the string is a valid identifier
+bool isValidIdentifier(char* str) {
+    if (str[0] == '\0') return false;
+    if (isdigit(str[0])) return false;
+    for (int i = 0; str[i]; i++) {
+        if (!isalnum(str[i]) && str[i] != '_') return false;
+    }
+    return true;
+}
+
+// Check if the string is a keyword
+bool isKeyword(char* str) {
+    const char* keywords[] = {
+        "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
+        "else", "enum", "extern", "float", "for", "goto", "if", "int", "long",
+        "register", "return", "short", "signed", "sizeof", "static", "struct", "switch",
+        "typedef", "union", "unsigned", "void", "volatile", "while"
+    };
+    for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
+        if (strcmp(str, keywords[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Check if the string is an integer
+bool isInteger(char* str) {
+    if (str == NULL || *str == '\0') {
+        return false;
+    }
+
+    int i = 0;
+    if (str[i] == '-' || str[i] == '+') i++; // Handle negative/positive sign
+    while (isdigit(str[i])) {
+        i++;
+    }
+    return str[i] == '\0';
+}
+
+// Check if the string is a standard library header
+bool isStandardLibraryHeader(char* str) {
+    size_t len = strlen(str);
+    return (len > 2 && str[0] == '<' && str[len - 1] == '>');
+}
+
+// Check if the string is a preprocessor directive
+bool isPreprocessorDirective(char* str) {
+    return (strncmp(str, "#include", 8) == 0);
+}
+
+// Get a substring from the given string's start and end positions
+char* getSubstring(char* str, int start, int end) {
+    int length = strlen(str);
+    if (start > end || start < 0 || end >= length) {
+        return NULL;
+    }
+    int subLength = end - start + 1;
+    char* subStr = (char*)malloc((subLength + 1) * sizeof(char));
+    if (subStr == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    strncpy(subStr, str + start, subLength);
+    subStr[subLength] = '\0';
+    return subStr;
+}
+
+// Perform lexical analysis
+void lexicalAnalyzer(char* input) {
+    int left = 0, right = 0;
+    int len = strlen(input);
+
+    while (right <= len) {
+        if (!isDelimiter(input[right]) && input[right] != '\0') {
+            right++;
+        }
+
+        if (isDelimiter(input[right]) || input[right] == '\0') {
+            if (left == right) {
+                if (isOperator(input[right])) {
+                    printf("Token: Operator, Value: %c\n", input[right]);
+                } else if (isPunctuation(input[right])) {
+                    printf("Token: Punctuation, Value: %c\n", input[right]);
+                }
+                right++;
+                left = right;
+
+            } else {
+                char* subStr = getSubstring(input, left, right - 1);
+                if (subStr) {
+                    if (isPreprocessorDirective(subStr)) {
+                        printf("Token: Preprocessor Directive, Value: %s\n", subStr);
+                    } else if (isKeyword(subStr)) {
+                        printf("Token: Keyword, Value: %s\n", subStr);
+                    } else if (isInteger(subStr)) {
+                        printf("Token: Integer, Value: %s\n", subStr);
+                    } else if (isStandardLibraryHeader(subStr)) {
+                        printf("Token: Standard Library Header, Value: %s\n", subStr);
+                    } else if (isValidIdentifier(subStr)) {
+                        printf("Token: Identifier, Value: %s\n", subStr);
+                    } else {
+                        printf("Token: Unidentified, Value: %s\n", subStr);
+                    }
+                    free(subStr);
+                }
+                left = right;
+            }
+        }
+    }
+}
+
+int main() {
+    FILE* file_ptr;
+    char ch;
+    file_ptr = fopen("test.c", "r");
+    if (file_ptr == NULL) {
+        fprintf(stderr, "File can't be opened\n");
+        return EXIT_FAILURE;
+    }
+    // Read the file content into a buffer
+    char lex_input[MAX_LENGTH];
+    int i = 0;
+    while ((ch = fgetc(file_ptr)) != EOF && i < MAX_LENGTH - 1) {
+        lex_input[i++] = ch;
+    }
+    lex_input[i] = '\0';  // Null-terminate the string
+    // Close the file
+    fclose(file_ptr);
+    // Print and analyze the input
+    printf("For Expression \"%s\":\n", lex_input);
+    lexicalAnalyzer(lex_input);
+    return 0;
+}
+
+
+
+
+Pattern
+
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+bool matches_a(const char *str) {
+    return strcmp(str, "a") == 0;
+}
+
+bool matches_abb(const char *str) {
+    return strcmp(str, "abb") == 0;
+}
+
+bool matches_a_star_b_plus(const char *str) {
+    int i = 0;
+
+    while (str[i] == 'a') i++; // Skip leading 'a's
+
+    if (str[i] != 'b') return false; // Ensure there's at least one 'b'
+
+    while (str[i] == 'b') i++; // Skip trailing 'b's
+
+    return str[i] == '\0'; // Ensure the string ends here
+}
+
+int main() {
+    char input[100];
+    printf("Enter a string: ");
+    scanf("%s", input);
+
+    if (matches_a(input)) {
+        printf("The string matches the pattern 'a'\n");
+    } else if (matches_abb(input)) {
+        printf("The string matches the pattern 'abb'\n");
+    } else if (matches_a_star_b_plus(input)) {
+        printf("The string matches the pattern 'a*b+'\n");
+    } else {
+        printf("The string does not match any of the patterns\n");
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+Left recursion
+
+#include <stdio.h>
+#include <string.h>
+void main() {
+    char l[50], r[50], temp[10], productions[25][50];
+    int i, j, flag, consumed, prodCount, k;
+    printf("Enter the number of productions: ");
+    scanf("%d", &prodCount); // Input the number of productions
+
+    for (k = 0; k < prodCount; k++) {
+        i = 0;
+        flag = 0;
+        consumed = 0;
+
+        printf("Enter production %d: ", k + 1);
+        scanf("%1s->%s", l, r); // Read LHS and RHS of the production
+
+        while (sscanf(r + consumed, "%[^|]s", temp) == 1 && consumed <= strlen(r)) {
+            if (temp[0] == l[0]) {
+                flag = 1;
+                sprintf(productions[i++], "%s'->%s%s'\0", l, temp + 1, l);
+            } else {
+                sprintf(productions[i++], "%s->%s%s'\0", l, temp, l);
+            }
+            consumed += strlen(temp) + 1;
+        }
+
+        if (flag == 1) {
+            sprintf(productions[i++], "%s'->ε\0", l);
+            printf("The productions after eliminating Left Recursion for %s->%s are:\n", l, r);
+            for (j = 0; j < i; j++) {
+                printf("%s\n", productions[j]);
+            }
+        } else {
+            printf("The production %s->%s has no Left Recursion.\n", l, r);
+        }
+    }
+}
+
+
+
+
+
+Left factoring
+
+#include <stdio.h>
+
+void removeLeftFactoring(char *nonTerminal, char *productions) {
+    char commonPrefix[100], remaining[10][100], newNonTerminal[2];
+    int i = 0, j = 0, k = 0, l = 0, hasLeftFactoring = 0;
+    char alternates[10][100];
+    int altCount = 0;
+    // Split productions into alternates
+    while (productions[i] != '\0') {
+        j = 0;
+        while (productions[i] != '|' && productions[i] != '\0')
+        {
+            alternates[altCount][j++] = productions[i++];
+        }
+        alternates[altCount][j] = '\0';
+        altCount++;
+        if (productions[i] == '|') {
+            i++;
+        }
+    }
+    // Find the common prefix
+    for (i = 0; alternates[0][i] != '\0'; i++) {
+        char currentChar = alternates[0][i];
+        for (j = 1; j < altCount; j++) {
+            if (alternates[j][i] != currentChar) {
+                commonPrefix[i] = '\0';
+                hasLeftFactoring = (i > 0);
+                break;
+            }
+        }
+        if (!hasLeftFactoring) {
+            commonPrefix[i] = currentChar;
+        } else {
+            break;
+        }
+    }
+    commonPrefix[i] = '\0';
+    // If no left factoring, print as is
+    if (!hasLeftFactoring) {
+        printf("No left factoring found.\n");
+        printf("%s -> ", nonTerminal);
+        for (i = 0; i < altCount; i++) {
+            printf("%s", alternates[i]);
+            if (i < altCount - 1) {
+                printf(" | ");
+            }
+        }
+        printf("\n");
+        return;
+    }
+    // Separate remaining parts
+    for (j = 0; j < altCount; j++) {
+        i = 0;
+        while (alternates[j][i] == commonPrefix[i] && commonPrefix[i] != '\0') {
+            i++;
+        }
+        k = 0;
+        while (alternates[j][i] != '\0') {
+            remaining[j][k++] = alternates[j][i++];
+        }
+        remaining[j][k] = '\0';
+    }
+    // Print the factored productions
+    printf("After removing left factoring:\n");
+    printf("%s -> %s%s'\n", nonTerminal, commonPrefix, nonTerminal);
+    printf("%s' -> ", nonTerminal);
+    for (i = 0; i < altCount; i++) {
+        if (remaining[i][0] == '\0') {
+            printf("ε");
+        } else {
+            printf("%s", remaining[i]);
+        }
+        if (i < altCount - 1) {
+            printf(" | ");
+        }
+    }
+    printf("\n");
+}
+int main() {
+    char nonTerminal[2], productions[100];
+    // Input: Non-terminal and its productions
+    printf("Enter the non-terminal: ");
+    scanf("%s", nonTerminal);
+    printf("Enter the productions (use '|' for alternates): ");
+    scanf("%s", productions);
+    // Remove left factoring
+    removeLeftFactoring(nonTerminal, productions);
+    return 0;
+}
+
+
+
+
+
+
+First
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void FIRST(char);
+int addToSet(char[], char);
+
+int count, n = 0, m = 0;
+char prodn[10][10], first[10], follow[10];
+char nonTerminals[10];
+int nonTerminalCount = 0;
+
+int main() {
+    int i, j;
+    char ch;
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &count);
+    printf("Enter %d productions (use $ for epsilon):\n", count);
+    for(i = 0; i < count; i++) {
+        scanf("%s", prodn[i]);
+        char nonTerminal = prodn[i][0];
+
+        // Store unique non-terminals
+        int found = 0;
+        for (j = 0; j < nonTerminalCount; j++) {
+            if (nonTerminals[j] == nonTerminal) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            nonTerminals[nonTerminalCount++] = nonTerminal;
+        }
+    }
+
+    // Calculate and display FIRST and FOLLOW for each non-terminal
+    for (i = 0; i < nonTerminalCount; i++) {
+        char nonTerminal = nonTerminals[i];
+
+        // Calculate FIRST set
+        n = 0;  // Reset index for FIRST array
+        memset(first, 0, sizeof(first)); // Clear the FIRST set
+        FIRST(nonTerminal);
+        printf("FIRST(%c) = { ", nonTerminal);
+        for (j = 0; j < n; j++) {
+            printf("%c ", first[j]);
+        }
+        printf("}\n");
+
+
+
+    }
+
+    return 0;
+}
+
+// Function to add an element to a set if it's not already present
+int addToSet(char set[], char c) {
+    if (c == '\0') return 0; // Ignore null characters
+    int i;
+    for (i = 0; set[i] != '\0'; i++) {
+        if (set[i] == c)
+            return 0; // Element already in set
+    }
+    set[i] = c;
+    set[i + 1] = '\0';
+    return 1; // Successfully added
+}
+
+// Function to find FIRST set of a given symbol
+void FIRST(char c) {
+    int j;
+
+    if (!isupper(c)) { // If c is a terminal
+        addToSet(first, c);
+        n++;
+        return;
+    }
+
+    for (j = 0; j < count; j++) {
+        if (prodn[j][0] == c) { // If production starts with c
+            if (prodn[j][3] == '$') { // If epsilon production
+                addToSet(first, '$');
+                n++;
+            }
+            else if (islower(prodn[j][3])) { // If production has terminal
+                addToSet(first, prodn[j][3]);
+                n++;
+            }
+            else { // If production has non-terminal
+                FIRST(prodn[j][3]);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+Follow
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void FIRST(char);
+void FOLLOW(char);
+int addToSet(char[], char);
+
+int count, n = 0, m = 0;
+char prodn[10][10], first[10], follow[10];
+char nonTerminals[10]; // Array to store unique non-terminals
+int nonTerminalCount = 0;
+
+int main() {
+    int i, j;
+    char ch;
+
+    printf("Enter the number of productions: ");
+    scanf("%d", &count);
+    printf("Enter %d productions (use $ for epsilon):\n", count);
+    for(i = 0; i < count; i++) {
+        scanf("%s", prodn[i]);
+        char nonTerminal = prodn[i][0];
+
+        // Store unique non-terminals
+        int found = 0;
+        for (j = 0; j < nonTerminalCount; j++) {
+            if (nonTerminals[j] == nonTerminal) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            nonTerminals[nonTerminalCount++] = nonTerminal;
+        }
+    }
+
+    // Calculate and display FIRST and FOLLOW for each non-terminal
+    for (i = 0; i < nonTerminalCount; i++) {
+        char nonTerminal = nonTerminals[i];
+
+        // Calculate FIRST set
+        n = 0;  // Reset index for FIRST array
+        memset(first, 0, sizeof(first)); // Clear the FIRST set
+        FIRST(nonTerminal);
+        printf("FIRST(%c) = { ", nonTerminal);
+        for (j = 0; j < n; j++) {
+            printf("%c ", first[j]);
+        }
+        printf("}\n");
+
+        // Calculate FOLLOW set
+        m = 0;  // Reset index for FOLLOW array
+        memset(follow, 0, sizeof(follow)); // Clear the FOLLOW set
+        FOLLOW(nonTerminal);
+        printf("FOLLOW(%c) = { ", nonTerminal);
+        for (j = 0; j < m; j++) {
+            printf("%c ", follow[j]);
+        }
+        printf("}\n\n");
+    }
+
+    return 0;
+}
+
+// Function to add an element to a set if it's not already present
+int addToSet(char set[], char c) {
+    if (c == '\0') return 0; // Ignore null characters
+    int i;
+    for (i = 0; set[i] != '\0'; i++) {
+        if (set[i] == c)
+            return 0; // Element already in set
+    }
+    set[i] = c;
+    set[i + 1] = '\0';
+    return 1; // Successfully added
+}
+
+// Function to find FIRST set of a given symbol
+void FIRST(char c) {
+    int j;
+
+    if (!isupper(c)) { // If c is a terminal
+        addToSet(first, c);
+        n++;
+        return;
+    }
+
+    for (j = 0; j < count; j++) {
+        if (prodn[j][0] == c) { // If production starts with c
+            if (prodn[j][2] == '$') { // If epsilon production
+                addToSet(first, '$');
+                n++;
+            }
+            else if (islower(prodn[j][2])) { // If production has terminal
+                addToSet(first, prodn[j][2]);
+                n++;
+            }
+            else { // If production has non-terminal
+                FIRST(prodn[j][2]);
+            }
+        }
+    }
+}
+
+// Function to find FOLLOW set of a given symbol
+void FOLLOW(char c) {
+    int i, j;
+
+    // If c is the start symbol, add '$' to FOLLOW set
+    if (prodn[0][0] == c) {
+        addToSet(follow, '$');
+        m++;
+    }
+
+    // Iterate over all productions
+    for (i = 0; i < count; i++) {
+        for (j = 2; j < strlen(prodn[i]); j++) {
+            if (prodn[i][j] == c) { // If we find c in production
+                if (prodn[i][j + 1] != '\0') {
+                    // If there's a symbol after c, calculate FIRST of that symbol
+                    if (islower(prodn[i][j + 1])) { // If terminal
+                        addToSet(follow, prodn[i][j + 1]);
+                        m++;
+                    } else { // If non-terminal
+                        int k;
+                        n = 0; // Reset index for FIRST array
+                        memset(first, 0, sizeof(first)); // Clear the FIRST set for reuse
+                        FIRST(prodn[i][j + 1]);
+                        for (k = 0; k < n; k++) {
+                            if (first[k] != '$') {
+                                if (addToSet(follow, first[k]))
+                                    m++;
+                            }
+                        }
+                        // If FIRST contains epsilon, add FOLLOW of left-hand side
+                        if (strchr(first, '$') != NULL) {
+                            FOLLOW(prodn[i][0]);
+                        }
+                    }
+                }
+                // If at the end of production, add FOLLOW of left-hand side
+                else if (prodn[i][j + 1] == '\0' && c != prodn[i][0]) {
+                    FOLLOW(prodn[i][0]);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+SRP
+
+#include <stdio.h>
+#include <string.h>
+struct ProductionRule {
+    char left[10];    // Left-hand side of the production rule
+    char right[10];   // Right-hand side of the production rule
+};
+int main() {
+    char input[20], stack[50], temp[50], ch[2], *token1, *token2, *substring;
+    int i, j, stack_length, substring_length, stack_top, rule_count = 0;
+    struct ProductionRule rules[10];
+    stack[0] = '\0'; // Initialize stack as empty
+    printf("\nEnter the number of production rules: ");
+    scanf("%d", &rule_count);
+    printf("\nEnter the production rules (in the form 'left->right'):\n");
+    for (i = 0; i < rule_count; i++) {
+        scanf("%s", temp);
+        token1 = strtok(temp, "->");
+        token2 = strtok(NULL, "->");
+        strcpy(rules[i].left, token1);
+        strcpy(rules[i].right, token2);
+    }
+    // Append $ to input string to mark end of input
+    printf("\nEnter the input string: ");
+    scanf("%s", input);
+    strcat(input, "$");  // Add end-of-input symbol
+    i = 0;
+    while (1) {
+        if (i < strlen(input)) {
+            ch[0] = input[i];
+            ch[1] = '\0';
+            i++;
+            strcat(stack, ch);
+            printf("%s\t", stack);
+            for (int k = i; k < strlen(input); k++) {
+                printf("%c", input[k]);
+            }
+            printf("\tShift %s\n", ch);
+        }
+        for (j = 0; j < rule_count; j++) {
+            substring = strstr(stack, rules[j].right);
+            if (substring != NULL) {
+                stack_length = strlen(stack);
+                substring_length = strlen(substring);
+                stack_top = stack_length - substring_length;
+                stack[stack_top] = '\0';
+                strcat(stack, rules[j].left);
+                printf("%s\t", stack);
+                for (int k = i; k < strlen(input); k++) {
+                    printf("%c", input[k]);
+                }
+                printf("\tReduce %s->%s\n", rules[j].left, rules[j].right);
+                j = -1;  // Restart reduction to apply newly reduced symbols
+            }
+        }
+        // Check if stack matches the start symbol and input is complete
+        if (strcmp(stack, rules[0].left) == 0 && input[i] == '$') {
+            printf("\nAccepted\n");
+            break;
+        }
+        if (i == strlen(input) && strcmp(stack, rules[0].left) != 0) {
+            printf("\nNot Accepted\n");
+            break;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+bit stu,dest char stu,destu
+
+
+BIT STUFFING
+
+#include<stdio.h>
+#include<string.h>
+
+void main()
+{
+    char data[100],data1[200];
+    int c=0,i,j=0;
+    printf("enter data need to be stuffed  : ");
+    scanf("%s",data);
+    for(i=0;i<strlen(data);i++){
+        if (data[i]=='1'){
+            c+=1;
+            data1[j++]=data[i];
+        }
+        else{
+            c=0;
+            data1[j++]=data[i];
+        }
+        if(c==5){
+            c=0;
+            data1[j++]='0';
+        }
+    }
+    data1[j]='\0';
+    printf(data1);
+}
+
+
+BIT DESTUFFING
+
+#include<stdio.h>
+#include<string.h>
+
+void main()
+{
+    char data[100],data1[200];
+    int c=0,i,j=0;
+
+    printf("enter that need to be destuffed");
+    scanf("%s",data);
+    for(i=0;i<strlen(data);i++)
+    {
+        if(data[i]=='1'){
+            c+=1;
+            data1[j++]=data[i];
+        }
+        else{
+            if(c==5){
+                c=0;
+                continue;
+            }
+            else{
+                c=0;
+                data1[j++]=data[i];
+            }
+        }
+    }
+    data1[j]='\0';
+    printf(data1);
+}
+
+
+CHARACTER STUFFING
+
+#include<stdio.h>
+#include<string.h>
+
+#define MAX_SIZE 100
+#define FLAG_STRING "FLAG"
+#define ESC_STRING "ESC"
+#define FLAG_STRING_LEN 4
+#define ESC_STRING_LEN 3
+
+void charStuffing(const char input[100],char output[100])
+{
+    int i=0,j=0;
+    while(i<strlen(input))
+    {
+        if(strncmp(&input[i],FLAG_STRING,FLAG_STRING_LEN)==0||
+            strncmp(&input[i],ESC_STRING,ESC_STRING_LEN)==0)
+        {
+            strcpy(&output[j],ESC_STRING);
+            j+=ESC_STRING_LEN;
+        }
+        output[j++]=input[i++];
+    }
+    output[j]='\0';
+}
+int main()
+{
+    char data[MAX_SIZE];
+    char data1[MAX_SIZE];
+
+    printf("enter : ");
+    fgets(data,sizeof(data),stdin);
+    data[strcspn(data,"\n")]='\0';
+    charStuffing(data,data1);
+    printf(data1);
+    return 0;
+}
+
+
+CHAR DESTUFFING
+
+#include<stdio.h>
+#include<string.h>
+
+#define MAX_SIZE 200
+#define FLAG_STRING "FLAG"
+#define ESC_STRING "ESC"
+#define FLAG_STRING_LEN 4
+#define ESC_STRING_LEN 3
+
+void charDestuffing(const char input[],char output[])
+{
+    int i=0;
+    int j=0;
+    while(i<strlen(input))
+    {
+        if(strncmp(&input[i],ESC_STRING,ESC_STRING_LEN)==0)
+        {
+            i+=ESC_STRING_LEN;
+        }
+        output[j++]=input[i++];
+    }
+    output[j]='\0';
+}
+int main()
+{
+    char data[MAX_SIZE];
+    char data1[MAX_SIZE];
+
+    printf("enter : ");
+    fgets(data,sizeof(data),stdin);
+    data[strcspn(data,"\n")]='\0';
+    charDestuffing(data,data1);
+    printf(data1);
+    return 0;
+}
+
+
+CRC
+
+#include<stdio.h>
+#include<string.h>
+
+#define N strlen(gen_poly)
+
+char data[200];
+char check_value[50];
+char gen_poly[20];
+int i,j,data_length;
+
+void xor()
+{
+    for(j=0;j<N;j++)
+    {
+        check_value[j]=((check_value[j]==gen_poly[j])? '0':'1');
+    }
+}
+void crc()
+{
+    for(i=0;i<N;i++)
+    {
+        check_value[i]=data[i];
+    }
+    do{
+        if (check_value[0]=='1')
+        {
+            xor();
+        }
+        for(j=0;j<N-1;j++)
+        {
+            check_value[j]=check_value[j+1];
+        }
+        check_value[j]=data[i++];
+    }while(i<=data_length+N-1);
+}
+void receiver()
+{
+    printf("\n Enter the received data: ");
+    scanf("%s",data);
+    printf("\n received data is %s",data);
+    crc();
+    for(i=0;(i<N-1)&&(check_value[i]!='1');i++);
+    if (i<N-1)
+    {
+        printf("\n yes error");
+    }
+    else
+    {
+        printf("\n No error");
+    }
+}
+int main()
+{
+    printf("enter data : ");
+    scanf("%s",data);
+    printf("enter genpoly : ");
+    scanf("%s",gen_poly);
+    data_length=strlen(data);
+    for(i=data_length;i<data_length+N-1;i++)
+    {
+        data[i]='0';
+    }
+    data[i]='\0';
+    printf("padded data is %s",data);
+    crc();
+    printf("\nCRC or Check value is: %s", check_value);
+    for(i=data_length;i<data_length+N-1;i++)
+    {
+        data[i]=check_value[i-data_length];
+    }
+    printf("\n final data : %s",data);
+    receiver();
+    return 0;
+}
+
+
+
+
+
+
+CRC
+
+#include <stdio.h>
+#include <string.h>
+
+#define N strlen(gen_poly)  // Macro to calculate the length of the generator polynomial
+
+char data[28];           // Array to store the input data
+char check_value[28];    // Array to store the CRC check value
+char gen_poly[10];       // Array to store the generator polynomial
+int data_length, i, j;   // Variables for data length and loop indices
+
+// Function to perform XOR operation
+void XOR() {
+    for (j = 1; j < N; j++) {
+        check_value[j] = (check_value[j] == gen_poly[j]) ? '0' : '1';
+    }
+}
+
+// Function to calculate CRC
+void crc() {
+    for (i = 0; i < N; i++) {
+        check_value[i] = data[i];
+    }
+
+    do {
+        if (check_value[0] == '1') {
+            XOR();
+        }
+        for (j = 0; j < N - 1; j++) {
+            check_value[j] = check_value[j + 1];
+        }
+        check_value[j] = data[i++];
+    } while (i <= data_length + N - 1);
+}
+
+// Function to simulate the receiver checking the received data for errors
+void receiver() {
+    printf("Enter the received data: ");
+    scanf("%s", data);
+    printf("\n-----------------------------\n");
+    printf("Data received: %s", data);
+
+    crc();  // Recalculate the CRC for the received data
+    // Check if the received data contains errors
+    for (i = 0; (i < N - 1) && (check_value[i] != '1'); i++);
+
+    if (i < N - 1) {
+        printf("\nError detected\n\n");
+    } else {
+        printf("\nNo error detected\n\n");
+    }
+}
+
+int main() {
+    // Input the data to be transmitted
+    printf("\nEnter data to be transmitted: ");
+    scanf("%s", data);
+
+    // Input the generator polynomial
+    printf("\nEnter the Generating polynomial: ");
+    scanf("%s", gen_poly);
+
+    data_length = strlen(data);  // Calculate the length of the input data
+
+    // Pad the data with N-1 zeros
+    for (i = data_length; i < data_length + N - 1; i++) {
+        data[i] = '0';
+    }
+    data[i] = '\0';  // Null-terminate the string
+
+    printf("\n----------------------------------------");
+    printf("\nData padded with n-1 zeros: %s", data);
+    printf("\n----------------------------------------");
+
+    crc();  // Calculate the CRC for the padded data
+
+    printf("\nCRC or Check value is: %s", check_value);
+
+    // Append the CRC to the original data
+    for (i = data_length; i < data_length + N - 1; i++) {
+        data[i] = check_value[i - data_length];
+    }
+    data[i] = '\0';  // Null-terminate the string
+
+    printf("\n----------------------------------------");
+    printf("\nFinal data to be sent: %s", data);
+    printf("\n----------------------------------------\n");
+
+    receiver();  // Simulate the receiver's operations
+    return 0;
+}
+
+
+
+
+
+
+
+Dijkstras
+
+#include <stdio.h>
+#include <limits.h>
+#define MAX_VERTICES 100
+int minDistance(int dist[], int sptSet[], int vertices) {
+    int min = INT_MAX, minIndex;
+    for (int v = 0; v < vertices; v++) {
+        if (!sptSet[v] && dist[v] < min) {
+            min = dist[v];
+            minIndex = v;
+        }
+    }
+    return minIndex;
+}
+void printSolution(int dist[], int vertices) {
+    printf("Vertex \tDistance from Source\n");
+    for (int i = 0; i < vertices; i++) {
+        printf("%d \t%d\n", i, dist[i]);
+    }
+}
+void dijkstra(int graph[MAX_VERTICES][MAX_VERTICES], int src, int vertices) {
+    int dist[MAX_VERTICES];
+    int sptSet[MAX_VERTICES];
+
+    for (int i = 0; i < vertices; i++) {
+        dist[i] = INT_MAX;
+        sptSet[i] = 0;
+    }
+    dist[src] = 0;
+    for (int count = 0; count < vertices - 1; count++) {
+        int u = minDistance(dist, sptSet, vertices);
+        sptSet[u] = 1;
+
+        for (int v = 0; v < vertices; v++) {
+            if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX && dist[u] + graph[u][v] < dist[v]) {
+                dist[v] = dist[u] + graph[u][v];
+            }
+        }
+    }
+    printSolution(dist, vertices);
+}
+int main() {
+    int vertices;
+    printf("Input the number of vertices: ");
+    scanf("%d", &vertices);
+    if (vertices <= 0 || vertices > MAX_VERTICES) {
+        printf("Invalid number of vertices. Exiting...\n");
+        return 1;
+    }
+    int graph[MAX_VERTICES][MAX_VERTICES];
+
+    printf("Input the adjacency matrix for the graph (use 0 for no edge):\n");
+    for (int i = 0; i < vertices; i++) {
+        for (int j = 0; j < vertices; j++) {
+            scanf("%d", &graph[i][j]);
+        }
+    }
+    int source;
+    printf("Input the source vertex: ");
+    scanf("%d", &source);
+    if (source < 0 || source >= vertices) {
+        printf("Invalid source vertex. Exiting...\n");
+        return 1;
+    }
+    dijkstra(graph, source, vertices);
+    return 0;
+}

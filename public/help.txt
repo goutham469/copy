@@ -14,6 +14,8 @@ all.txt
 
 final.txt 
 
+swamy.txt
+
 final.txt contails all codes with sample output.
 
 Tip:-1)  to write all this code to a .txt file use the command , 
